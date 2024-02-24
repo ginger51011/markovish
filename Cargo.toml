@@ -22,8 +22,10 @@ hashbrown = { version = "0.14", default-features = false, features = ["ahash"] }
 unicode-segmentation = "1.11"
 itertools = "0.12"
 rand_distr = "0.4"
+serde = { version = "1.0", optional = true, features = ["derive"] }
 
 [features]
 default = ["inline-more"]
 inline-more = ["hashbrown/inline-more"]
+serde = ["dep:serde", "hashbrown/serde"]
 

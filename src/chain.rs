@@ -10,6 +10,9 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::distribution::{TokenDistribution, TokenDistributionBuilder};
 use crate::token::{TokenPair, TokenPairRef, TokenRef};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// Simple second order Markov chain. This chain might behave in ways you do not expect; Since we
 /// are looking at [`Token`](crate::token::Token)s, and not words.
 ///
@@ -178,6 +181,7 @@ impl Chain {
 /// Builds a Chain by being fed strings and keeping track of the likelihood that one token
 /// follows two others.
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct ChainBuilder {
     map: HashMap<TokenPair, TokenDistributionBuilder>,
 }

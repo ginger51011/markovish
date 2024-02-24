@@ -5,6 +5,9 @@ use hashbrown::HashMap;
 use rand::Rng;
 use rand_distr::{weighted_alias::WeightedAliasIndex, Distribution};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 use crate::token::Token;
 
 /// A distribution of choices and their likelyhood.
@@ -29,6 +32,7 @@ impl TokenDistribution {
 /// Builder for [`TokenDistribution`]. Used when parsing a text to add a lot of words, and then to
 /// build a list of [`TokenDistribution`] using how many times they appeared.
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TokenDistributionBuilder {
     /// Counts how many times a token is likely to appear.
     map: HashMap<String, usize>,

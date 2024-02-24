@@ -31,6 +31,9 @@
 //!
 //! - `inline-more`: Enables the [`hashbrown`](https://crates.io/crates/hashbrown) `inline-more`
 //! feature, improving performance at the cost of compilation time. Enabled by default.
+//! - `serde`: Allows for serializing and deserializing some of the data structures in this library,
+//! so they can be stored and reused once created. Especially serializing [`ChainBuilder`] is
+//! useful, since the same chain can be recreated without having to parse the text again.
 
 pub mod chain;
 pub mod distribution;

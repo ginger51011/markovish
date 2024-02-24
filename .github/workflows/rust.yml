@@ -10,17 +10,17 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-default-features:
+  build-all-features:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
     - name: Check
-      run: cargo check --verbose
+      run: cargo check --verbose --all-features
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --all-features
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test --verbose --all-features
 
   build-no-default-features:
     runs-on: ubuntu-latest

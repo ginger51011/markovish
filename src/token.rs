@@ -5,11 +5,15 @@
 
 use hashbrown::Equivalent;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// Representation of a string segment.
 pub type Token = String;
 
 /// An owned pair of [`Token`]s.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TokenPair(pub Token, pub Token);
 
 /// A borrowed version of [`Token`]; if [`Token`] is [`String`], then [`TokenRef`] is `&str`.
