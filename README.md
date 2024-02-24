@@ -20,6 +20,8 @@ This crate is aimed to be very simple, and the current aim is to do the followin
 2. Parse it.
 3. Generate an infinite string of new text using that.
 
+More information about usage and the like can be found in the crate docs and in the [examples](./examples).
+
 # Support
 
 I do not accept any donations. If you however find any software I

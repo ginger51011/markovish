@@ -8,10 +8,10 @@ use rand::Rng;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::distribution::{TokenDistribution, TokenDistributionBuilder};
-use crate::token::{Token, TokenPair, TokenPairRef};
+use crate::token::{TokenPair, TokenPairRef, TokenRef};
 
 /// Simple second order Markov chain. This chain might behave in ways you do not expect; Since we
-/// are looking at [`Token`]s, and not words.
+/// are looking at [`Token`](crate::token::Token)s, and not words.
 ///
 /// ```
 /// # use markovish::{Chain, ChainBuilder};
@@ -48,7 +48,7 @@ impl Chain {
         &self,
         rng: &mut impl Rng,
         prev: &TokenPairRef<'a>,
-    ) -> Option<&Token> {
+    ) -> Option<TokenRef<'_>> {
         let dist = self.map.get(prev)?;
         Some(dist.get_random_token(rng))
     }
@@ -72,7 +72,7 @@ impl Chain {
         rng: &mut impl Rng,
         prev: &TokenPairRef<'a>,
         n: usize,
-    ) -> Option<Vec<&Token>> {
+    ) -> Option<Vec<TokenRef<'_>>> {
         if n < 1 {
             return Some(Vec::new());
         }
@@ -131,7 +131,7 @@ impl Chain {
         rng: &mut impl Rng,
         prev: &TokenPairRef<'a>,
         n: usize,
-    ) -> Option<Vec<&Token>> {
+    ) -> Option<Vec<TokenRef<'_>>> {
         if n < 1 {
             return Some(Vec::new());
         }

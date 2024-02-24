@@ -26,6 +26,11 @@
 //! let new_fortune = chain.generate_n_tokens(&mut rngod, &start.as_ref(), 30);
 //! ```
 //!
+//! The examples in this crate use [`rand::thread_rng()`], but if you want things to go fast you
+//! could try using [`rand::rngs::SmallRng`](https://docs.rs/rand/latest/rand/rngs/struct.SmallRng.html),
+//! which is generally faster but not as safe (but you should NOT use this crate to generate passwords
+//! anyway).
+//!
 //! # Features
 //!
 //! `markovish` comes with some feature(s) that you can disable (or enable) at will. They are:
