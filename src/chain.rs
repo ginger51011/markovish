@@ -202,7 +202,7 @@ impl ChainBuilder {
             None => {
                 let mut b = TokenDistributionBuilder::new();
                 b.add_token(next);
-                let tp = TokenPair::from(prev);
+                let tp = TokenPair::from(&prev);
                 self.map.insert(tp, b);
             }
         }
@@ -388,5 +388,31 @@ mod tests {
         assert!(chain
             .generate_n_tokens(&mut thread_rng(), &("You", " "), 13)
             .is_none())
+    }
+
+    #[test]
+    fn generate_long_from_start_tokens() {
+        // Nice output from fortune
+        let s = r#"
+Coach: How's it going, Norm?
+Norm:  Daddy's rich and Momma's good lookin'.
+                -- Cheers, Truce or Consequences
+
+Sam:   What's up, Norm?
+Norm:  My nipples.  It's freezing out there.
+                -- Cheers, Coach Returns to Action
+
+Coach: What's the story, Norm?
+Norm:  Thirsty guy walks into a bar.  You finish it.
+                -- Cheers, Endless Slumper
+"#;
+        let mut cb = Chain::builder();
+        cb.feed_str(s).unwrap();
+        let chain = cb.build();
+        let mut rng = thread_rng();
+        for _ in 0..100 {
+            let start = chain.start_tokens(&mut rng).unwrap();
+            let _ = chain.generate_n_tokens(&mut rng, &start.as_ref(), 100);
+        }
     }
 }

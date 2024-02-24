@@ -18,9 +18,15 @@ pub type TokenRef<'a> = &'a str;
 /// A borrowed version of [`TokenPair`] that does not own its pair. Like [`TokenRef`] to [`Token`].
 pub type TokenPairRef<'a> = (TokenRef<'a>, TokenRef<'a>);
 
-impl From<(&str, &str)> for TokenPair {
-    fn from(value: (&str, &str)) -> Self {
+impl<'a> From<&TokenPairRef<'a>> for TokenPair {
+    fn from(value: &TokenPairRef) -> Self {
         Self(value.0.to_string(), value.1.to_string())
+    }
+}
+
+impl TokenPair {
+    pub fn as_ref(&self) -> TokenPairRef<'_> {
+        (&self.0, &self.1)
     }
 }
 
