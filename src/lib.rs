@@ -5,6 +5,11 @@
 //! the three-word combination is in the source text). The randomness is built using a weighted
 //! distribution (see [`rand_distr::weighted_alias::WeightedAliasIndex`]).
 //!
+//! `markovish` uses [`hashbrown`](https://crates.io/crates/hashbrown) internally for extra speed.
+//! However, the default hasher used by `hashbrown` does not provide the same level of protection
+//! against HashDoS attacks as the standard library hasher. If you are only going to use `markovish`
+//! on texts you trust, you can ignore this.
+//!
 //! # Features
 //!
 //! `markovish` comes with some feature(s) that you can disable (or enable) at will. They are:

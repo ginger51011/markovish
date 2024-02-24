@@ -12,6 +12,12 @@ pub type Token = String;
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TokenPair(pub Token, pub Token);
 
+/// A borrowed version of [`Token`]; if [`Token`] is [`String`], then [`TokenRef`] is `&str`.
+pub type TokenRef<'a> = &'a str;
+
+/// A borrowed version of [`TokenPair`] that does not own its pair. Like [`TokenRef`] to [`Token`].
+pub type TokenPairRef<'a> = (TokenRef<'a>, TokenRef<'a>);
+
 impl From<(&str, &str)> for TokenPair {
     fn from(value: (&str, &str)) -> Self {
         Self(value.0.to_string(), value.1.to_string())

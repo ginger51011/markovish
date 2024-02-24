@@ -8,7 +8,7 @@ use rand::Rng;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::distribution::{TokenDistribution, TokenDistributionBuilder};
-use crate::token::{Token, TokenPair};
+use crate::token::{Token, TokenPair, TokenPairRef};
 
 /// Simple second order Markov chain. This chain might behave in ways you do not expect; Since we
 /// are looking at [`Token`]s, and not words.
@@ -44,7 +44,11 @@ impl Chain {
     /// Generates a random new token using the previous tokens.
     ///
     /// If the chain has never seen the `prev` tokens together, `None` is returned.
-    pub fn generate_next_token(&self, rng: &mut impl Rng, prev: &(&str, &str)) -> Option<&Token> {
+    pub fn generate_next_token<'a>(
+        &self,
+        rng: &mut impl Rng,
+        prev: &TokenPairRef<'a>,
+    ) -> Option<&Token> {
         let dist = self.map.get(prev)?;
         Some(dist.get_random_token(rng))
     }
@@ -63,10 +67,10 @@ impl Chain {
     /// # Panics
     ///
     /// Will panic if `n` is so big no vector can hold that many elements.
-    pub fn generate_n_tokens(
+    pub fn generate_n_tokens<'a>(
         &self,
         rng: &mut impl Rng,
-        prev: &(&str, &str),
+        prev: &TokenPairRef<'a>,
         n: usize,
     ) -> Option<Vec<&Token>> {
         if n < 1 {
@@ -122,10 +126,10 @@ impl Chain {
     /// # Panics
     ///
     /// Will panic if `n` is so big no vector can hold that many elements.
-    pub fn generate_max_n_tokens(
+    pub fn generate_max_n_tokens<'a>(
         &self,
         rng: &mut impl Rng,
-        prev: &(&str, &str),
+        prev: &TokenPairRef<'a>,
         n: usize,
     ) -> Option<Vec<&Token>> {
         if n < 1 {
