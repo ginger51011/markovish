@@ -11,7 +11,7 @@
 
 Super simple (and fast) Markov chains in Rust.
 
-This project is mostly for my personal use in [`pandoras_pot`](https://github.com/ginger51011/pandoras_pot/), but PR
+This project is mostly for my personal use in [`pandoras_pot`](https://github.com/ginger51011/pandoras_pot/), but PRs
 and issues are welcome.
 
 This crate is aimed to be very simple, and the current aim is to do the following well:

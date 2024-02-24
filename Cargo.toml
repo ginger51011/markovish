@@ -25,8 +25,6 @@ rand_distr = "0.4.3"
 
 [features]
 default = ["hashbrown"]
-# Uses rand small_rng for RNG. Faster.
-small_rng = ["rand/small_rng"]
 # Enables using hasbrown as an internal hash table. Faster, but can be DoSed if used on user input.
 hashbrown = ["dep:hashbrown"]
 
