@@ -16,9 +16,7 @@ use crate::token::{TokenPair, TokenPairRef, TokenRef};
 /// ```
 /// # use markovish::{Chain, ChainBuilder};
 /// # use rand::thread_rng;
-/// let mut cb = Chain::builder();
-/// cb.feed_str("I am &str").unwrap();
-/// let chain = cb.build();
+/// let chain = Chain::builder().feed_str("I am &str").unwrap().build().unwrap();
 ///
 /// // You would expect this to be "&str", but no!
 /// assert_eq!(
@@ -29,7 +27,7 @@ use crate::token::{TokenPair, TokenPairRef, TokenRef};
 /// // We have a space which is a token!
 /// assert_eq!(
 ///     chain.generate_next_token(&mut thread_rng(), &("I", " ")).as_deref(),
-///     Some(&"am".to_string())
+///     Some("am")
 /// );
 /// ```
 #[derive(Clone, Debug)]
@@ -37,17 +35,33 @@ pub struct Chain {
     map: HashMap<TokenPair, TokenDistribution>,
 }
 impl Chain {
+    /// Creates a new second order Markov chain from a string.
+    pub fn from_text(content: &str) -> Result<Self, String> {
+        Self::builder().feed_str(content)?.build()
+    }
+
     pub fn builder() -> ChainBuilder {
         ChainBuilder::new()
+    }
+
+    /// Generates a string with `n` tokens, randomly choosing a starting point.
+    ///
+    /// # Examples
+    /// ```
+    /// # let s = "I am an example string hello I very cool";
+    /// ```
+    pub fn generate_str(&self, rng: &mut impl Rng, n: usize) -> Option<Vec<&str>> {
+        let start = self.start_tokens(rng)?;
+        self.generate_n_tokens(rng, &start.as_ref(), n)
     }
 
     /// Generates a random new token using the previous tokens.
     ///
     /// If the chain has never seen the `prev` tokens together, `None` is returned.
-    pub fn generate_next_token<'a>(
+    pub fn generate_next_token(
         &self,
         rng: &mut impl Rng,
-        prev: &TokenPairRef<'a>,
+        prev: &TokenPairRef<'_>,
     ) -> Option<TokenRef<'_>> {
         let dist = self.map.get(prev)?;
         Some(dist.get_random_token(rng))
@@ -67,10 +81,10 @@ impl Chain {
     /// # Panics
     ///
     /// Will panic if `n` is so big no vector can hold that many elements.
-    pub fn generate_n_tokens<'a>(
+    pub fn generate_n_tokens(
         &self,
         rng: &mut impl Rng,
-        prev: &TokenPairRef<'a>,
+        prev: &TokenPairRef<'_>,
         n: usize,
     ) -> Option<Vec<TokenRef<'_>>> {
         if n < 1 {
@@ -126,10 +140,10 @@ impl Chain {
     /// # Panics
     ///
     /// Will panic if `n` is so big no vector can hold that many elements.
-    pub fn generate_max_n_tokens<'a>(
+    pub fn generate_max_n_tokens(
         &self,
         rng: &mut impl Rng,
-        prev: &TokenPairRef<'a>,
+        prev: &TokenPairRef<'_>,
         n: usize,
     ) -> Option<Vec<TokenRef<'_>>> {
         if n < 1 {
@@ -177,20 +191,18 @@ impl ChainBuilder {
 
     /// Uses up the builder and creates a new chain.
     ///
-    /// # Panics
-    ///
-    /// If the builder has not been fed any strings.
-    pub fn build(self) -> Chain {
-        assert!(
-            !self.map.is_empty(),
-            "the builder has not been fed any strings"
-        );
+    /// Will return an error if the builder have not been fed any strings.
+    pub fn build(self) -> Result<Chain, String> {
+        if self.map.is_empty() {
+            return Err("the builder has not been fed any strings".to_string());
+        }
+
         let mut chain_map = HashMap::with_capacity(self.map.len());
         for (pair, dist_builder) in self.map {
             chain_map.insert(pair, dist_builder.build());
         }
 
-        Chain { map: chain_map }
+        Ok(Chain { map: chain_map })
     }
 
     /// Add the occurance of `next` following `prev`.
@@ -212,14 +224,14 @@ impl ChainBuilder {
     /// this. May fail if the input string is too short.
     ///
     /// The tokens are from [`unicode_segmentation::UnicodeSegmentation::split_word_bounds()`].
-    pub fn feed_str(&mut self, content: &str) -> Result<(), String> {
+    pub fn feed_str(mut self, content: &str) -> Result<Self, String> {
         let tokens = content.split_word_bounds();
 
         for (right, left, next) in tokens.tuple_windows() {
             self.add_occurance((right, left), next);
         }
 
-        Ok(())
+        Ok(self)
     }
 }
 
@@ -238,7 +250,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn empty_chain_builder_panics() {
-        let _ = Chain::builder().build();
+        let _ = Chain::builder().build().unwrap();
     }
 
     #[test]
@@ -250,9 +262,8 @@ mod tests {
     #[test]
     fn simple_single_possible_token() {
         let s = "I am";
-        let mut cb = Chain::builder();
-        cb.feed_str(s).unwrap();
-        let chain = cb.build();
+        let cb = Chain::builder().feed_str(s).unwrap();
+        let chain = cb.build().unwrap();
         assert_eq!(
             chain
                 .generate_next_token(&mut thread_rng(), &("I", " "))
@@ -264,9 +275,8 @@ mod tests {
     #[test]
     fn simple_single_impossible_token() {
         let s = "I am";
-        let mut cb = Chain::builder();
-        cb.feed_str(s).unwrap();
-        let chain = cb.build();
+        let cb = Chain::builder().feed_str(s).unwrap();
+        let chain = cb.build().unwrap();
         assert!(chain
             .generate_next_token(&mut thread_rng(), &("You", " "))
             .is_none());
@@ -275,9 +285,8 @@ mod tests {
     #[test]
     fn simple_generate_max_n_tokens() {
         let s = "I am-full!of?cats";
-        let mut cb = Chain::builder();
-        cb.feed_str(s).unwrap();
-        let chain = cb.build();
+        let cb = Chain::builder().feed_str(s).unwrap();
+        let chain = cb.build().unwrap();
 
         assert_eq!(
             chain
@@ -307,9 +316,8 @@ mod tests {
     #[test]
     fn simple_generate_n_tokens() {
         let s = "I am-full!of?cats";
-        let mut cb = Chain::builder();
-        cb.feed_str(s).unwrap();
-        let chain = cb.build();
+        let cb = Chain::builder().feed_str(s).unwrap();
+        let chain = cb.build().unwrap();
         assert_eq!(
             chain
                 .generate_n_tokens(&mut thread_rng(), &("I", " "), 7)
@@ -347,9 +355,8 @@ mod tests {
     #[test]
     fn simple_generate_max_n_tokens_zero() {
         let s = "I am-full!of?cats";
-        let mut cb = Chain::builder();
-        cb.feed_str(s).unwrap();
-        let chain = cb.build();
+        let cb = Chain::builder().feed_str(s).unwrap();
+        let chain = cb.build().unwrap();
         assert!(chain
             .generate_max_n_tokens(&mut thread_rng(), &("I", " "), 0)
             .unwrap()
@@ -359,9 +366,8 @@ mod tests {
     #[test]
     fn simple_generate_max_n_tokens_impossible_first() {
         let s = "I am-full!of?cats";
-        let mut cb = Chain::builder();
-        cb.feed_str(s).unwrap();
-        let chain = cb.build();
+        let cb = Chain::builder().feed_str(s).unwrap();
+        let chain = cb.build().unwrap();
         assert!(chain
             .generate_max_n_tokens(&mut thread_rng(), &("You", " "), 13)
             .is_none())
@@ -370,9 +376,8 @@ mod tests {
     #[test]
     fn simple_generate_n_tokens_zero() {
         let s = "I am-full!of?cats";
-        let mut cb = Chain::builder();
-        cb.feed_str(s).unwrap();
-        let chain = cb.build();
+        let cb = Chain::builder().feed_str(s).unwrap();
+        let chain = cb.build().unwrap();
         assert!(chain
             .generate_n_tokens(&mut thread_rng(), &("I", " "), 0)
             .unwrap()
@@ -382,9 +387,8 @@ mod tests {
     #[test]
     fn simple_generate_n_tokens_impossible_first() {
         let s = "I am-full!of?cats";
-        let mut cb = Chain::builder();
-        cb.feed_str(s).unwrap();
-        let chain = cb.build();
+        let cb = Chain::builder().feed_str(s).unwrap();
+        let chain = cb.build().unwrap();
         assert!(chain
             .generate_n_tokens(&mut thread_rng(), &("You", " "), 13)
             .is_none())
@@ -406,13 +410,46 @@ Coach: What's the story, Norm?
 Norm:  Thirsty guy walks into a bar.  You finish it.
                 -- Cheers, Endless Slumper
 "#;
-        let mut cb = Chain::builder();
-        cb.feed_str(s).unwrap();
-        let chain = cb.build();
+        let cb = Chain::builder().feed_str(s).unwrap();
+        let chain = cb.build().unwrap();
         let mut rng = thread_rng();
         for _ in 0..100 {
             let start = chain.start_tokens(&mut rng).unwrap();
             let _ = chain.generate_n_tokens(&mut rng, &start.as_ref(), 100);
+        }
+    }
+
+    #[test]
+    fn generate_long_using_generate_str() {
+        let s = r#"
+The difference between a program and a script isn't as subtle as most people
+think. A script is interpreted, and a program is compiled.
+
+Of course, there's no reason you can't write a compiler that immediately
+executes the compiled form of a program without writing compilation artifacts
+to disk, but that's an implementation detail, and precision in technical
+matters is important.
+
+Though Perl 5, for example, doesn't write out the artifacts of compilation to
+disk and Java and .Net do, Perl 5 is clearly an interpreter even though it
+evaluates the compiled form of code in the same way that the JVM and the CLR
+do. Why? Because it's a scripting language.
+
+Okay, that's a facetious explanation.
+
+The difference between a program and a script is if there's native compilation
+available in at least one widely-used implementation. Thus Java before the
+prevalence of even the HotSpot JVM and its JIT was a scripting language and
+now it's a programming language, except that you can write a C interpreter
+that doesn't have a JIT and C programs become scripts.
+
+    -- chromatic
+    -- "Program vs. Script" ( http://use.perl.org/~chromatic/journal/35804 )
+        "#;
+
+        let chain = Chain::from_text(s).unwrap();
+        for _ in 0..100 {
+            chain.generate_str(&mut thread_rng(), 100).unwrap();
         }
     }
 }

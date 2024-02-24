@@ -16,14 +16,8 @@
 //! This is a test of the Emergency Broadcast System.  If this had been an
 //! actual emergency, do you really think we'd stick around to tell you?
 //! "#;
-//! let mut cb = Chain::builder();
-//! cb.feed_str(fortune);
-//! let chain = cb.build();
-//!
-//! // This can be any pair of tokens in `fortune`
-//! let mut rngod = rand::thread_rng();
-//! let start = chain.start_tokens(&mut rngod).unwrap();
-//! let new_fortune = chain.generate_n_tokens(&mut rngod, &start.as_ref(), 30);
+//! let chain = Chain::from_text(fortune).unwrap();
+//! let new_fortune = chain.generate_str(&mut rand::thread_rng(), 300);
 //! ```
 //!
 //! The examples in this crate use [`rand::thread_rng()`], but if you want things to go fast you

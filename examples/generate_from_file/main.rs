@@ -20,14 +20,10 @@ fn main() {
 
     let text =
         std::fs::read_to_string(PathBuf::from(args[1].clone())).expect("could not read file");
-    let mut cb = Chain::builder();
-    cb.feed_str(&text).expect("could not feed string");
-    let chain = cb.build();
-    let start = chain.start_tokens(&mut thread_rng()).unwrap();
+    let chain = Chain::from_text(&text).unwrap();
     let gen_text = chain
-        .generate_n_tokens(
+        .generate_str(
             &mut thread_rng(),
-            &start.as_ref(),
             args[2]
                 .parse()
                 .expect("did not provide a valid token number"),
