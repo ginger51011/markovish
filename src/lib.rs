@@ -9,19 +9,13 @@
 //!
 //! `markovish` comes with some feature(s) that you can disable (or enable) at will. They are:
 //!
-//! - `hashbrown` - Uses the [`hashbrown`](https://crates.io/crates/hashbrown) crate for the
-//! internal chain. While a lot faster, it is not as protected against HashDoS attacks. Enabled by
-//! default.
+//! - `inline-more` - Enables the [`hashbrown`](https://crates.io/crates/hashbrown) `inline-more`
+//! feature, improving performance at the cost of compilation time. Enabled by default.
 
-#[cfg(feature = "hashbrown")]
 use hashbrown::Equivalent;
-#[cfg(feature = "hashbrown")]
 use hashbrown::HashMap;
 
 use rand::{seq::IteratorRandom, Rng};
-
-#[cfg(not(feature = "hashbrown"))]
-use std::collections::HashMap;
 
 use itertools::Itertools;
 use rand_distr::{weighted_alias::WeightedAliasIndex, Distribution};
@@ -49,7 +43,6 @@ impl PartialEq<(&str, &str)> for TokenPair {
     }
 }
 
-#[cfg(feature = "hashbrown")]
 impl Equivalent<TokenPair> for (&str, &str) {
     fn equivalent(&self, key: &TokenPair) -> bool {
         key.eq(self)
