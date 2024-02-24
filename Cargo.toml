@@ -19,9 +19,9 @@ codegen-units = 1
 [dependencies]
 rand = { version = "0.8" }
 hashbrown = { version = "0.14", default-features = false, features = ["ahash"] }
-unicode-segmentation = "1.11.0"
-itertools = "0.12.1"
-rand_distr = "0.4.3"
+unicode-segmentation = "1.11"
+itertools = "0.12"
+rand_distr = "0.4"
 
 [features]
 default = ["inline-more"]
