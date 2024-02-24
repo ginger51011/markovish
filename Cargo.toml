@@ -1,0 +1,32 @@
+[package]
+name = "markovish"
+version = "0.1.0"
+authors = ["Emil Jonathan Eriksson <github.com/ginger51011>"]
+edition = "2021"
+description = "Simple Markov chain implementation for text generation"
+keywords = []
+categories = []
+readme = "README.md"
+license = "MPL-2.0"
+repository = "https://github.com/ginger51011/markovish/"
+
+# We want it real fast
+[profile.release]
+lto = true
+opt-level = 3
+codegen-units = 1
+
+[dependencies]
+rand = { version = "0.8" }
+hashbrown = { version = "0.14", optional = true }
+unicode-segmentation = "1.11.0"
+itertools = "0.12.1"
+rand_distr = "0.4.3"
+
+[features]
+default = ["hashbrown"]
+# Uses rand small_rng for RNG. Faster.
+small_rng = ["rand/small_rng"]
+# Enables using hasbrown as an internal hash table. Faster, but can be DoSed if used on user input.
+hashbrown = ["dep:hashbrown"]
+
