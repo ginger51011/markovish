@@ -1,6 +1,6 @@
 [package]
 name = "markovish"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Emil Jonathan Eriksson <github.com/ginger51011>"]
 edition = "2021"
 description = "Simple Markov chain implementation for text generation"
@@ -9,12 +9,6 @@ categories = ["text-processing"]
 readme = "README.md"
 license = "MPL-2.0"
 repository = "https://github.com/ginger51011/markovish/"
-
-# We want it real fast
-[profile.release]
-lto = true
-opt-level = 3
-codegen-units = 1
 
 [dependencies]
 rand = { version = "0.8" }
