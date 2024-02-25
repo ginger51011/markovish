@@ -47,6 +47,37 @@ impl Chain {
         ChainBuilder::new()
     }
 
+    /// Returns an iterator of fall pairs that have been found in the source text(s). When calling
+    /// [`Chain::start_tokens()`], a [`TokenPair`] is randomly chosen from this list.
+    ///
+    /// This can be used together with [`Chain::generate_max_n_tokens()`] to get more fine-grained
+    /// control of how the chain is restarted if it stumbles on a token pair with no possible next
+    /// token. You can filter the pairs so that they are more likely to start a sentance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use markovish::Chain;
+    /// let chain = Chain::from_text("I am but a tiny example! I have three sentances. U?").unwrap();
+    /// let good_starting_points: Vec<_> = chain.pairs()
+    ///                                         .filter(|tp| tp.0.as_str() == "." || tp.0.as_str() == "!")
+    ///                                         .collect();
+    /// assert_eq!(good_starting_points.len(), 2);
+    /// ```
+    pub fn pairs(&self) -> impl Iterator<Item = &TokenPair> {
+        self.map.keys()
+    }
+
+    /// Randomly chooses two tokens that are known to be able to generate a new token. If no
+    /// start tokens exist, `None` is returned.
+    ///
+    /// While this is an easy way, the returned value can be any two pairs of token in
+    /// the source text. If you need more control, you could first filter on [`Chain::pairs()`],
+    /// and then randomly choose starting tokens from that subset.
+    pub fn start_tokens(&self, rng: &mut impl Rng) -> Option<&TokenPair> {
+        self.pairs().choose(rng)
+    }
+
     /// Generates a string with `n` tokens, randomly choosing a starting point.
     ///
     /// # Examples
@@ -68,12 +99,6 @@ impl Chain {
     ) -> Option<TokenRef<'_>> {
         let dist = self.map.get(prev)?;
         Some(dist.get_random_token(rng))
-    }
-
-    /// Randomly chooses two tokens that are known to be able to generate a new token. If no
-    /// start tokens exist, `None` is returned.
-    pub fn start_tokens(&self, rng: &mut impl Rng) -> Option<&TokenPair> {
-        self.map.keys().choose(rng)
     }
 
     /// Generates `n` tokens, using previously used tokens to generate new ones. If two tokens are found that have never been seen before,
@@ -455,5 +480,18 @@ that doesn't have a JIT and C programs become scripts.
         for _ in 0..100 {
             chain.generate_str(&mut thread_rng(), 100).unwrap();
         }
+    }
+
+    #[test]
+    fn get_pairs() {
+        let s = r#"
+This is a text.
+There are many like it, but this one is mine.
+        -- Unknown
+        "#;
+        let chain = Chain::from_text(s).unwrap();
+        let good_starting_points: Vec<_> =
+            chain.pairs().filter(|tp| tp.0.as_str() == "\n").collect();
+        assert_eq!(good_starting_points.len(), 3);
     }
 }
