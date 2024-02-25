@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 //! Dead simple text generation using markov chains. The text generator behind [`pandoras_pot`](https://github.com/ginger51011/pandoras_pot/).
 //!
 //! Right now this generator only supports second order Markov chains, that is, it looks at two
