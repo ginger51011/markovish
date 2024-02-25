@@ -14,7 +14,8 @@ use crate::token::{TokenPair, TokenPairRef, TokenRef};
 use serde::{Deserialize, Serialize};
 
 /// Simple second order Markov chain. This chain might behave in ways you do not expect; Since we
-/// are looking at [`Token`](crate::token::Token)s, and not words.
+/// are looking at [`Token`](crate::token::Token)s, and not words. If this is not desired, you
+/// can use your own splitting of tokens and use [`ChainBuilder::feed_tokens()`].
 ///
 /// ```
 /// # use markovish::{Chain, ChainBuilder};
@@ -252,12 +253,35 @@ impl ChainBuilder {
     /// Feeds the chain builder with more text, adding the tokens in this string to the mappings of
     /// this. May fail if the input string is too short.
     ///
-    /// The tokens are from [`unicode_segmentation::UnicodeSegmentation::split_word_bounds()`].
-    pub fn feed_str(mut self, content: &str) -> Result<Self, String> {
+    /// The tokens are from [`unicode_segmentation::UnicodeSegmentation::split_word_bounds()`]; if
+    /// you want more control you can pre-split your tokens and use
+    /// [`ChainBuilder::feed_tokens()`], but using a builder fed with both strings and pre-split
+    /// tokens might result in odd output.
+    pub fn feed_str(self, content: &str) -> Result<Self, String> {
         let tokens = content.split_word_bounds();
+        self.feed_tokens(tokens)
+    }
 
-        for (right, left, next) in tokens.tuple_windows() {
-            self.add_occurance((right, left), next);
+    /// Feeds the chain builder with pre-split tokens. Useful if you want to just split on
+    /// whitespace and then join the result. May fail if the input is too short.
+    ///
+    /// If used *together* with [`ChainBuilder::feed_str()`], the result may be odd, since
+    /// the different sets of token pairs may not collide enough.
+    pub fn feed_tokens<'a, T: Iterator<Item = TokenRef<'a>>>(
+        mut self,
+        tokens: T,
+    ) -> Result<Self, String> {
+        let mut windows = tokens.tuple_windows();
+
+        // We should add at least one
+        if let Some((left, right, next)) = windows.next() {
+            self.add_occurance((left, right), next);
+        } else {
+            return Err("not enough tokens".to_string());
+        }
+
+        for (left, right, next) in windows {
+            self.add_occurance((left, right), next);
         }
 
         Ok(self)
@@ -286,6 +310,13 @@ mod tests {
     #[should_panic]
     fn empty_token_dist_builder_panics() {
         let _ = TokenDistribution::builder().build();
+    }
+
+    #[test]
+    fn feed_too_few_tokens() {
+        // Only 2, we need three
+        let s = "I ";
+        assert!(Chain::builder().feed_str(s).is_err());
     }
 
     #[test]
