@@ -7,6 +7,7 @@
 [![GitHub License](https://img.shields.io/github/license/ginger51011/markovish)](https://github.com/ginger51011/markovish/blob/main/LICENSE)
 [![Crates.io (markovish)](https://img.shields.io/crates/v/markovish)](https://crates.io/crates/markovish)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ginger51011/markovish/rust.yml)](https://github.com/ginger51011/markovish/actions/)
+[![docs.rs](https://img.shields.io/docsrs/markovish)](https://docs.rs/markovish/latest/markovish/)
 </div>
 
 Super simple (and fast) Markov chains in Rust.
@@ -20,7 +21,8 @@ This crate is aimed to be very simple, and the current aim is to do the followin
 2. Parse it.
 3. Generate an infinite string of new text using that.
 
-More information about usage and the like can be found in the crate docs and in the [examples](./examples).
+More information about usage and the like can be found in the [crate docs](https://docs.rs/markovish/latest/markovish/)
+and in the [examples](./examples).
 
 # Support
 

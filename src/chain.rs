@@ -47,7 +47,7 @@ impl Chain {
         ChainBuilder::new()
     }
 
-    /// Returns an iterator of fall pairs that have been found in the source text(s). When calling
+    /// Returns an iterator of all pairs that have been found in the source text(s). When calling
     /// [`Chain::start_tokens()`], a [`TokenPair`] is randomly chosen from this list.
     ///
     /// This can be used together with [`Chain::generate_max_n_tokens()`] to get more fine-grained
