@@ -52,13 +52,13 @@ impl Chain {
     ///
     /// This can be used together with [`Chain::generate_max_n_tokens()`] to get more fine-grained
     /// control of how the chain is restarted if it stumbles on a token pair with no possible next
-    /// token. You can filter the pairs so that they are more likely to start a sentance.
+    /// token. You can filter the pairs so that they are more likely to start a sentence.
     ///
     /// # Examples
     ///
     /// ```
     /// # use markovish::Chain;
-    /// let chain = Chain::from_text("I am but a tiny example! I have three sentances. U?").unwrap();
+    /// let chain = Chain::from_text("I am but a tiny example! I have three sentences. U?").unwrap();
     /// let good_starting_points: Vec<_> = chain.pairs()
     ///                                         .filter(|tp| tp.0.as_str() == "." || tp.0.as_str() == "!")
     ///                                         .collect();
