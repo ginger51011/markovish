@@ -2,9 +2,10 @@
 //! Dead simple text generation using markov chains. The text generator behind [`pandoras_pot`](https://github.com/ginger51011/pandoras_pot/).
 //!
 //! Right now this generator only supports second order Markov chains, that is, it looks at two
-//! symbols at a time and then guesses what the third might be (weighted depending on how likely
-//! the three-word combination is in the source text). The randomness is built using a weighted
-//! distribution (see [`rand_distr::weighted_alias::WeightedAliasIndex`]).
+//! tokens at a time and then guesses what the third might be (weighted depending on how likely
+//! the three-token combination is in the source text). The randomness is built using a weighted
+//! distribution (see [`rand_distr::weighted_alias::WeightedAliasIndex`]). See [`token`] for more
+//! information about what defines a token.
 //!
 //! `markovish` uses [`hashbrown`](https://crates.io/crates/hashbrown) internally for extra speed.
 //! However, the default hasher used by `hashbrown` does not provide the same level of protection

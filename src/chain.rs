@@ -237,7 +237,7 @@ impl ChainBuilder {
     }
 
     /// Add the occurance of `next` following `prev`.
-    pub fn add_occurance(&mut self, prev: (&str, &str), next: &str) {
+    pub fn add_occurance(&mut self, prev: &TokenPairRef<'_>, next: &str) {
         match self.map.get_mut(&prev) {
             Some(b) => {
                 b.add_token(next);
@@ -245,7 +245,7 @@ impl ChainBuilder {
             None => {
                 let mut b = TokenDistributionBuilder::new();
                 b.add_token(next);
-                let tp = TokenPair::from(&prev);
+                let tp = TokenPair::from(prev);
                 self.map.insert(tp, b);
             }
         }
@@ -276,13 +276,13 @@ impl ChainBuilder {
 
         // We should add at least one
         if let Some((left, right, next)) = windows.next() {
-            self.add_occurance((left, right), next);
+            self.add_occurance(&(left, right), next);
         } else {
             return Err("not enough tokens".to_string());
         }
 
         for (left, right, next) in windows {
-            self.add_occurance((left, right), next);
+            self.add_occurance(&(left, right), next);
         }
 
         Ok(self)

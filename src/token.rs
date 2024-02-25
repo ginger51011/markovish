@@ -27,6 +27,12 @@ pub type TokenRef<'a> = &'a str;
 /// A borrowed version of [`TokenPair`] that does not own its pair. Like [`TokenRef`] to [`Token`].
 pub type TokenPairRef<'a> = (TokenRef<'a>, TokenRef<'a>);
 
+impl TokenPair {
+    pub fn new(left: &str, right: &str) -> Self {
+        Self(left.to_string(), right.to_string())
+    }
+}
+
 impl<'a> From<&TokenPairRef<'a>> for TokenPair {
     fn from(value: &TokenPairRef) -> Self {
         Self(value.0.to_string(), value.1.to_string())
@@ -39,14 +45,42 @@ impl TokenPair {
     }
 }
 
-impl PartialEq<(&str, &str)> for TokenPair {
-    fn eq(&self, other: &(&str, &str)) -> bool {
+impl<'a> PartialEq<TokenPairRef<'a>> for TokenPair {
+    fn eq(&self, other: &TokenPairRef<'_>) -> bool {
         self.0 == *other.0 && self.1 == *other.1
     }
 }
 
-impl Equivalent<TokenPair> for (&str, &str) {
+impl<'a> Equivalent<TokenPair> for TokenPairRef<'a> {
     fn equivalent(&self, key: &TokenPair) -> bool {
         key.eq(self)
+    }
+}
+
+impl<'a> PartialEq<&TokenPairRef<'a>> for TokenPair {
+    fn eq(&self, other: &&TokenPairRef<'_>) -> bool {
+        self.0 == *other.0 && self.1 == *other.1
+    }
+}
+
+impl<'a> Equivalent<TokenPair> for &TokenPairRef<'a> {
+    fn equivalent(&self, key: &TokenPair) -> bool {
+        key.eq(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::token::TokenPair;
+
+    use super::TokenPairRef;
+
+    #[test]
+    fn equivalent_token_pair_with_ref() {
+        let tp_ref: TokenPairRef = ("hello", "there");
+        let tp = TokenPair::new("hello", "there");
+        assert_eq!(tp, tp_ref);
+        assert_eq!(tp, &tp_ref);
+        assert_eq!(&tp, &tp_ref);
     }
 }
