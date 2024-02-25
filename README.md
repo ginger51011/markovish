@@ -24,6 +24,8 @@ This crate is aimed to be very simple, and the current aim is to do the followin
 More information about usage and the like can be found in the [crate docs](https://docs.rs/markovish/latest/markovish/)
 and in the [examples](./examples).
 
+If you want to save a chain, you can enable the `serde` feature and serialize it.
+
 # Support
 
 I do not accept any donations. If you however find any software I

@@ -12,6 +12,7 @@ use crate::token::Token;
 
 /// A distribution of choices and their likelyhood.
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TokenDistribution {
     /// Mappings of index in choices to their likelyhood.
     dist: WeightedAliasIndex<usize>,
