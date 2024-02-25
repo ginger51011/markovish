@@ -1,7 +1,12 @@
 //! At the heart of a [`Chain`](crate::Chain) is a [`Token`]. In fact, this is just a String. But we make a
-//! distinction here: A Token is the output of
-//! [`unicode_segmentation::UnicodeSegmentation::split_word_bounds()`]; that is, it can be a word, a symbol
-//! like `"`, or something else. See that crate for more information.
+//! distinction here: A Token is any atomic piece of text.
+//!
+//! When using [`ChainBuilder::feed_str()`](crate::chain::ChainBuilder::feed_str()),
+//! it is the output of [`unicode_segmentation::UnicodeSegmentation::split_word_bounds()`]; that is,
+//! it can be a word, a symbol like `"`, or something else. See that crate for more information.
+//!
+//! If you want more control of what you want a token to be, you can use
+//! [`ChainBuilder::feed_tokens()`](crate::chain::ChainBuilder::feed_tokens()).
 
 use hashbrown::Equivalent;
 
