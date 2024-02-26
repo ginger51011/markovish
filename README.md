@@ -12,6 +12,18 @@
 
 Super simple (and fast) Markov chains in Rust.
 
+```rust
+use markovish::Chain;
+
+let fortune = r#"
+This is a test of the Emergency Broadcast System.  If this had been an
+actual emergency, do you really think we'd stick around to tell you?
+"#;
+
+let chain = Chain::from_text(fortune).unwrap();
+let new_fortune = chain.generate_str(&mut rand::thread_rng(), 300);
+```
+
 This project is mostly for my personal use in [`pandoras_pot`](https://github.com/ginger51011/pandoras_pot/), but PRs
 and issues are welcome.
 

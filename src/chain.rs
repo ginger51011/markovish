@@ -20,7 +20,10 @@ use serde::{Deserialize, Serialize};
 /// ```
 /// # use markovish::{Chain, ChainBuilder};
 /// # use rand::thread_rng;
-/// let chain = Chain::builder().feed_str("I am &str").unwrap().build().unwrap();
+/// use markovish::IntoChainBuilder;
+/// // You can use `.into_cb()` for the result of `feed_*` methods. This way, you can
+/// // ignore if the feed was successfull (enough tokens were provided) or not.
+/// let chain = Chain::builder().feed_str("I am &str").into_cb().build().unwrap();
 ///
 /// // You would expect this to be "&str", but no!
 /// assert_eq!(
@@ -41,8 +44,13 @@ pub struct Chain {
 }
 impl Chain {
     /// Creates a new second order Markov chain from a string.
-    pub fn from_text(content: &str) -> Result<Self, String> {
-        Self::builder().feed_str(content)?.build()
+    ///
+    /// If the provided text is not long enough to create a [`Chain`],
+    /// an empty [`ChainBuilder`] is returned instead.
+    pub fn from_text(content: &str) -> Result<Self, ChainBuilder> {
+        let mut cb = Self::builder();
+        cb = cb.feed_str(content)?.into();
+        cb.build()
     }
 
     pub fn builder() -> ChainBuilder {
@@ -205,6 +213,23 @@ impl Chain {
     }
 }
 
+/// The result of feeding some tokens to a [`ChainBuilder`]. The `Err` variant means that the feed
+/// failed, and that an unmodified [`ChainBuilder`] was returned.
+///
+/// Can be converted to a [`ChainBuilder`] using [`IntoChainBuilder::into_cb()`].
+///
+/// # Examples
+///
+/// ```
+/// # use markovish::{ChainBuilder, chain::FeedResult};
+/// use markovish::IntoChainBuilder;
+///
+/// let mut cb: ChainBuilder = ChainBuilder::new();
+/// let feed_result: FeedResult = cb.feed_str("I am fed.");
+/// cb = feed_result.into_cb();
+/// ```
+pub type FeedResult = Result<UpdatedChainBuilder, ChainBuilder>;
+
 /// Builds a Chain by being fed strings and keeping track of the likelihood that one token
 /// follows two others.
 #[derive(Clone, Debug)]
@@ -223,9 +248,9 @@ impl ChainBuilder {
     /// Uses up the builder and creates a new chain.
     ///
     /// Will return an error if the builder have not been fed any strings.
-    pub fn build(self) -> Result<Chain, String> {
+    pub fn build(self) -> Result<Chain, ChainBuilder> {
         if self.map.is_empty() {
-            return Err("the builder has not been fed any strings".to_string());
+            return Err(self);
         }
 
         let mut chain_map = HashMap::with_capacity(self.map.len());
@@ -237,16 +262,18 @@ impl ChainBuilder {
     }
 
     /// Add the occurance of `next` following `prev`.
-    pub fn add_occurance(&mut self, prev: &TokenPairRef<'_>, next: &str) {
+    pub fn add_occurance(&mut self, prev: &TokenPairRef<'_>, next: &str) -> AddedPair {
         match self.map.get_mut(&prev) {
             Some(b) => {
                 b.add_token(next);
+                AddedPair::Updated
             }
             None => {
                 let mut b = TokenDistributionBuilder::new();
                 b.add_token(next);
                 let tp = TokenPair::from(prev);
                 self.map.insert(tp, b);
+                AddedPair::New
             }
         }
     }
@@ -258,34 +285,64 @@ impl ChainBuilder {
     /// you want more control you can pre-split your tokens and use
     /// [`ChainBuilder::feed_tokens()`], but using a builder fed with both strings and pre-split
     /// tokens might result in odd output.
-    pub fn feed_str(self, content: &str) -> Result<Self, String> {
+    ///
+    /// See also [`ChainBuilder::feed_tokens()`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use markovish::ChainBuilder;
+    /// use markovish::IntoChainBuilder;
+    ///
+    /// let mut cb = ChainBuilder::new();
+    ///
+    /// // Chaining calls are easy, since the result can be used as a [`ChainBuilder`] using
+    /// // the `IntoChainBuilder::into_cb` method
+    /// cb = cb.feed_str("") // Won't feed, since we don't have enough tokens
+    ///         .into_cb() // We ignore if we succeeded
+    ///         .feed_str("Hello Tokens!") // Ok!
+    ///         .into_cb()
+    ///         .feed_str("I ") // Too few tokens again...
+    ///         .into_cb();
+    /// ```
+    pub fn feed_str(self, content: &str) -> FeedResult {
         let tokens = content.split_word_bounds();
         self.feed_tokens(tokens)
     }
 
     /// Feeds the chain builder with pre-split tokens. Useful if you want to just split on
-    /// whitespace and then join the result. May fail if the input is too short.
+    /// whitespace and then join the result. May fail if the input is too short, in which case
+    /// the (not updated) [`ChainBuilder`] is returned.
     ///
     /// If used *together* with [`ChainBuilder::feed_str()`], the result may be odd, since
     /// the different sets of token pairs may not collide enough.
-    pub fn feed_tokens<'a, T: Iterator<Item = TokenRef<'a>>>(
-        mut self,
-        tokens: T,
-    ) -> Result<Self, String> {
+    pub fn feed_tokens<'a, T: Iterator<Item = TokenRef<'a>>>(mut self, tokens: T) -> FeedResult {
         let mut windows = tokens.tuple_windows();
+        let mut new_pairs = 0_usize;
+        let mut updated_pairs = 0_usize;
 
         // We should add at least one
         if let Some((left, right, next)) = windows.next() {
-            self.add_occurance(&(left, right), next);
+            match self.add_occurance(&(left, right), next) {
+                AddedPair::New => new_pairs += 1,
+                AddedPair::Updated => updated_pairs += 1,
+            }
         } else {
-            return Err("not enough tokens".to_string());
+            return Err(self);
         }
 
         for (left, right, next) in windows {
-            self.add_occurance(&(left, right), next);
+            match self.add_occurance(&(left, right), next) {
+                AddedPair::New => new_pairs += 1,
+                AddedPair::Updated => updated_pairs += 1,
+            }
         }
 
-        Ok(self)
+        Ok(UpdatedChainBuilder {
+            chain_builder: self,
+            new_pairs,
+            updated_pairs,
+        })
     }
 }
 
@@ -295,11 +352,104 @@ impl Default for ChainBuilder {
     }
 }
 
+/// The result of feeding tokens to a [`ChainBuilder`], where tokens were
+/// added. Contains data about what was updated.
+///
+/// This is a thin wrapper around a [`ChainBuilder`].
+///
+/// # Examples
+///
+/// ```
+/// use markovish::{ChainBuilder, IntoChainBuilder, chain::UpdatedChainBuilder};
+///
+/// let updated: UpdatedChainBuilder = ChainBuilder::new().feed_str("Hello there").unwrap();
+/// let cb: ChainBuilder = updated.into_cb();
+/// ```
+#[derive(Debug)]
+pub struct UpdatedChainBuilder {
+    /// The wrapped updated [`ChainBuilder`]
+    pub chain_builder: ChainBuilder,
+    /// The amount of [`TokenPair`]s that were seen for the first time in
+    /// this update.
+    pub new_pairs: usize,
+    /// The amount of times existing [`TokenPair`]s had their distribution updated.
+    pub updated_pairs: usize,
+}
+
+impl From<UpdatedChainBuilder> for ChainBuilder {
+    fn from(value: UpdatedChainBuilder) -> Self {
+        value.chain_builder
+    }
+}
+
+impl From<FeedResult> for ChainBuilder {
+    fn from(value: FeedResult) -> Self {
+        match value {
+            Ok(ucb) => ucb.chain_builder,
+            Err(cb) => cb,
+        }
+    }
+}
+
+/// Marker result for [`ChainBuilder::add_occurance()`] to indicate if a [`TokenPair`] had been
+/// seen before or not.
+///
+/// Does not contain information about if the next token had been seen before or not.
+pub enum AddedPair {
+    /// This pair was new.
+    New,
+    /// This pair existed and the matching next token has been incremented.
+    Updated,
+}
+
+/// We're sealing [`IntoChainBuilder`] by using a supertrait. We want other crates to be
+/// able to call `into_cb`, but not to implement it themselves. So this trait should *never* be public.
+///
+/// See `<https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed>`.
+///
+/// # Examples
+///
+/// ```fail_compile
+/// use markovish::chain::SealedIntoChainBuilder;
+///
+/// struct MyStruct();
+///
+/// impl SealedIntoChainBuilder for MyStruct {}
+/// ```
+trait SealedIntoChainBuilder {}
+impl SealedIntoChainBuilder for FeedResult {}
+impl SealedIntoChainBuilder for UpdatedChainBuilder {}
+
+/// Sealed trait used to make a type convertable to a [`ChainBuilder`].
+///
+/// You cannot implement this by yourself, but you can use its method
+/// (or well, you could fork the whole crate I guess...).
+#[allow(private_bounds)]
+pub trait IntoChainBuilder: SealedIntoChainBuilder {
+    /// Returns the inner [`ChainBuilder`].
+    fn into_cb(self) -> ChainBuilder;
+}
+
+impl IntoChainBuilder for FeedResult {
+    fn into_cb(self) -> ChainBuilder {
+        match self {
+            Ok(ucb) => ucb.chain_builder,
+            Err(cb) => cb,
+        }
+    }
+}
+
+impl IntoChainBuilder for UpdatedChainBuilder {
+    fn into_cb(self) -> ChainBuilder {
+        self.chain_builder
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use rand::thread_rng;
 
-    use crate::{distribution::TokenDistribution, Chain};
+    use crate::{chain::IntoChainBuilder, distribution::TokenDistribution, Chain, ChainBuilder};
 
     #[test]
     #[should_panic]
@@ -323,7 +473,7 @@ mod tests {
     #[test]
     fn simple_single_possible_token() {
         let s = "I am";
-        let cb = Chain::builder().feed_str(s).unwrap();
+        let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
         assert_eq!(
             chain
@@ -336,7 +486,7 @@ mod tests {
     #[test]
     fn simple_single_impossible_token() {
         let s = "I am";
-        let cb = Chain::builder().feed_str(s).unwrap();
+        let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
         assert!(chain
             .generate_next_token(&mut thread_rng(), &("You", " "))
@@ -346,7 +496,7 @@ mod tests {
     #[test]
     fn simple_generate_max_n_tokens() {
         let s = "I am-full!of?cats";
-        let cb = Chain::builder().feed_str(s).unwrap();
+        let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
 
         assert_eq!(
@@ -377,7 +527,7 @@ mod tests {
     #[test]
     fn simple_generate_n_tokens() {
         let s = "I am-full!of?cats";
-        let cb = Chain::builder().feed_str(s).unwrap();
+        let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
         assert_eq!(
             chain
@@ -416,7 +566,7 @@ mod tests {
     #[test]
     fn simple_generate_max_n_tokens_zero() {
         let s = "I am-full!of?cats";
-        let cb = Chain::builder().feed_str(s).unwrap();
+        let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
         assert!(chain
             .generate_max_n_tokens(&mut thread_rng(), &("I", " "), 0)
@@ -427,7 +577,7 @@ mod tests {
     #[test]
     fn simple_generate_max_n_tokens_impossible_first() {
         let s = "I am-full!of?cats";
-        let cb = Chain::builder().feed_str(s).unwrap();
+        let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
         assert!(chain
             .generate_max_n_tokens(&mut thread_rng(), &("You", " "), 13)
@@ -437,7 +587,7 @@ mod tests {
     #[test]
     fn simple_generate_n_tokens_zero() {
         let s = "I am-full!of?cats";
-        let cb = Chain::builder().feed_str(s).unwrap();
+        let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
         assert!(chain
             .generate_n_tokens(&mut thread_rng(), &("I", " "), 0)
@@ -448,7 +598,7 @@ mod tests {
     #[test]
     fn simple_generate_n_tokens_impossible_first() {
         let s = "I am-full!of?cats";
-        let cb = Chain::builder().feed_str(s).unwrap();
+        let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
         assert!(chain
             .generate_n_tokens(&mut thread_rng(), &("You", " "), 13)
@@ -471,7 +621,7 @@ Coach: What's the story, Norm?
 Norm:  Thirsty guy walks into a bar.  You finish it.
                 -- Cheers, Endless Slumper
 "#;
-        let cb = Chain::builder().feed_str(s).unwrap();
+        let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
         let mut rng = thread_rng();
         for _ in 0..100 {
@@ -525,5 +675,18 @@ There are many like it, but this one is mine.
         let good_starting_points: Vec<_> =
             chain.pairs().filter(|tp| tp.0.as_str() == "\n").collect();
         assert_eq!(good_starting_points.len(), 3);
+    }
+
+    #[test]
+    fn feed_stats() {
+        let cb = ChainBuilder::new();
+
+        // `end` is never in a TokenPair, it's just added to ("hi", "hi")
+        let ucb = cb
+            .feed_tokens("hi hi what hi hi end".split_whitespace())
+            .unwrap();
+
+        assert_eq!(ucb.new_pairs, 3);
+        assert_eq!(ucb.updated_pairs, 1, "hi hi should be updated once");
     }
 }
