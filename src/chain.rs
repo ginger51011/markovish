@@ -367,7 +367,8 @@ impl Default for ChainBuilder {
 /// println!("Added {} new token pairs and updated {}", updated.new_pairs, updated.updated_pairs);
 /// let cb: ChainBuilder = updated.into();
 /// ```
-#[derive(Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct UpdatedChainBuilder {
     /// The wrapped updated [`ChainBuilder`]
     pub chain_builder: ChainBuilder,
@@ -397,6 +398,8 @@ impl From<FeedResult> for ChainBuilder {
 /// seen before or not.
 ///
 /// Does not contain information about if the next token had been seen before or not.
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive())]
 pub enum AddedPair {
     /// This pair was new.
     New,
