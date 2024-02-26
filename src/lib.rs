@@ -14,6 +14,7 @@
 //!
 //! ```
 //! use markovish::Chain;
+//!
 //! let fortune = r#"
 //! This is a test of the Emergency Broadcast System.  If this had been an
 //! actual emergency, do you really think we'd stick around to tell you?
@@ -41,4 +42,4 @@ pub mod chain;
 pub mod distribution;
 pub mod token;
 
-pub use chain::{Chain, ChainBuilder};
+pub use chain::{Chain, ChainBuilder, IntoChainBuilder};
