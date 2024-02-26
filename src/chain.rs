@@ -21,6 +21,7 @@ use serde::{Deserialize, Serialize};
 /// # use markovish::{Chain, ChainBuilder};
 /// # use rand::thread_rng;
 /// use markovish::IntoChainBuilder;
+///
 /// // You can use `.into_cb()` for the result of `feed_*` methods. This way, you can
 /// // ignore if the feed was successfull (enough tokens were provided) or not.
 /// let chain = Chain::builder().feed_str("I am &str").into_cb().build().unwrap();
@@ -363,7 +364,8 @@ impl Default for ChainBuilder {
 /// use markovish::{ChainBuilder, IntoChainBuilder, chain::UpdatedChainBuilder};
 ///
 /// let updated: UpdatedChainBuilder = ChainBuilder::new().feed_str("Hello there").unwrap();
-/// let cb: ChainBuilder = updated.into_cb();
+/// println!("Added {} new token pairs and updated {}", updated.new_pairs, updated.updated_pairs);
+/// let cb: ChainBuilder = updated.into();
 /// ```
 #[derive(Debug)]
 pub struct UpdatedChainBuilder {
