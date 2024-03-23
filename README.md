@@ -4,8 +4,9 @@
 <br />
 <br />
 
-[![GitHub License](https://img.shields.io/github/license/ginger51011/markovish)](https://github.com/ginger51011/markovish/blob/main/LICENSE)
+[![Static Badge](https://img.shields.io/badge/GitHub-ginger51011%2Fmarkovish-FFA400?style=flat&logo=github)](https://github.com/ginger51011/markovish)
 [![Crates.io (markovish)](https://img.shields.io/crates/v/markovish)](https://crates.io/crates/markovish)
+[![GitHub License](https://img.shields.io/github/license/ginger51011/markovish)](https://github.com/ginger51011/markovish/blob/main/LICENSE)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ginger51011/markovish/rust.yml)](https://github.com/ginger51011/markovish/actions/)
 [![docs.rs](https://img.shields.io/docsrs/markovish)](https://docs.rs/markovish/latest/markovish/)
 </div>
