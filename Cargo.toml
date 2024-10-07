@@ -11,7 +11,7 @@ license = "MPL-2.0"
 repository = "https://github.com/ginger51011/markovish/"
 
 [dependencies]
-hashbrown = { version = "0.14", default-features = false, features = ["ahash"] }
+hashbrown = { version = "0.15", default-features = false, features = ["default-hasher"] }
 itertools = "0.13"
 rand_distr = "0.4"
 rand = { version = "0.8" }
