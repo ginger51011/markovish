@@ -33,7 +33,7 @@ impl TokenPair {
     }
 }
 
-impl<'a> From<&TokenPairRef<'a>> for TokenPair {
+impl From<&TokenPairRef<'_>> for TokenPair {
     fn from(value: &TokenPairRef) -> Self {
         Self(value.0.to_string(), value.1.to_string())
     }
@@ -45,25 +45,25 @@ impl TokenPair {
     }
 }
 
-impl<'a> PartialEq<&TokenPairRef<'a>> for TokenPair {
+impl PartialEq<&TokenPairRef<'_>> for TokenPair {
     fn eq(&self, other: &&TokenPairRef<'_>) -> bool {
         self.0 == *other.0 && self.1 == *other.1
     }
 }
 
-impl<'a> PartialEq<TokenPairRef<'a>> for TokenPair {
+impl PartialEq<TokenPairRef<'_>> for TokenPair {
     fn eq(&self, other: &TokenPairRef<'_>) -> bool {
         self.eq(&other)
     }
 }
 
-impl<'a> Equivalent<TokenPair> for &TokenPairRef<'a> {
+impl Equivalent<TokenPair> for &TokenPairRef<'_> {
     fn equivalent(&self, key: &TokenPair) -> bool {
         key.eq(self)
     }
 }
 
-impl<'a> Equivalent<TokenPair> for TokenPairRef<'a> {
+impl Equivalent<TokenPair> for TokenPairRef<'_> {
     fn equivalent(&self, key: &TokenPair) -> bool {
         key.eq(self)
     }

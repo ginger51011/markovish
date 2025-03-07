@@ -141,7 +141,7 @@ impl Chain {
 
         // Since we are not including n, we don't take (n - 1)
         while res.len() < n {
-            if let Some(next) = self.generate_next_token(rng, &(&left, &right)) {
+            if let Some(next) = self.generate_next_token(rng, &(left, right)) {
                 res.push(next);
                 left = right;
                 right = next;
@@ -200,7 +200,7 @@ impl Chain {
         let (mut left, mut right) = (prev.1, first);
 
         for _ in 0..remaining {
-            if let Some(next) = self.generate_next_token(rng, &(&left, &right)) {
+            if let Some(next) = self.generate_next_token(rng, &(left, right)) {
                 res.push(next);
                 left = right;
                 right = next;
