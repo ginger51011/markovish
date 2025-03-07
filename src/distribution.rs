@@ -3,7 +3,7 @@
 
 use hashbrown::HashMap;
 use rand::Rng;
-use rand_distr::{weighted_alias::WeightedAliasIndex, Distribution};
+use rand_distr::{Distribution, weighted::WeightedAliasIndex};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ use crate::token::Token;
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TokenDistribution {
     /// Mappings of index in choices to their likelyhood.
-    dist: WeightedAliasIndex<usize>,
+    dist: WeightedAliasIndex<u64>,
     /// The actual choices
     choices: Vec<Token>,
 }
@@ -36,7 +36,7 @@ impl TokenDistribution {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TokenDistributionBuilder {
     /// Counts how many times a token is likely to appear.
-    map: HashMap<String, usize>,
+    map: HashMap<String, u64>,
 }
 
 impl TokenDistributionBuilder {
