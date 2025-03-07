@@ -3,8 +3,8 @@
 use hashbrown::HashMap;
 
 use itertools::Itertools;
-use rand::seq::IteratorRandom;
 use rand::Rng;
+use rand::seq::IteratorRandom;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::distribution::{TokenDistribution, TokenDistributionBuilder};
@@ -452,9 +452,9 @@ impl IntoChainBuilder for UpdatedChainBuilder {
 
 #[cfg(test)]
 mod tests {
-    use rand::thread_rng;
+    use rand::rng;
 
-    use crate::{chain::IntoChainBuilder, distribution::TokenDistribution, Chain, ChainBuilder};
+    use crate::{Chain, ChainBuilder, chain::IntoChainBuilder, distribution::TokenDistribution};
 
     #[test]
     #[should_panic]
@@ -481,9 +481,7 @@ mod tests {
         let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
         assert_eq!(
-            chain
-                .generate_next_token(&mut thread_rng(), &("I", " "))
-                .unwrap(),
+            chain.generate_next_token(&mut rng(), &("I", " ")).unwrap(),
             "am"
         );
     }
@@ -493,9 +491,11 @@ mod tests {
         let s = "I am";
         let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
-        assert!(chain
-            .generate_next_token(&mut thread_rng(), &("You", " "))
-            .is_none());
+        assert!(
+            chain
+                .generate_next_token(&mut rng(), &("You", " "))
+                .is_none()
+        );
     }
 
     #[test]
@@ -506,7 +506,7 @@ mod tests {
 
         assert_eq!(
             chain
-                .generate_max_n_tokens(&mut thread_rng(), &("I", " "), 7)
+                .generate_max_n_tokens(&mut rng(), &("I", " "), 7)
                 .unwrap(),
             vec!["am", "-", "full", "!", "of", "?", "cats"],
         );
@@ -514,7 +514,7 @@ mod tests {
         // Now with an actual limit
         assert_eq!(
             chain
-                .generate_max_n_tokens(&mut thread_rng(), &("I", " "), 2)
+                .generate_max_n_tokens(&mut rng(), &("I", " "), 2)
                 .unwrap(),
             vec!["am", "-"],
         );
@@ -522,7 +522,7 @@ mod tests {
         // Now with extra
         assert_eq!(
             chain
-                .generate_max_n_tokens(&mut thread_rng(), &("I", " "), 13)
+                .generate_max_n_tokens(&mut rng(), &("I", " "), 13)
                 .unwrap()
                 .len(),
             7
@@ -535,24 +535,20 @@ mod tests {
         let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
         assert_eq!(
-            chain
-                .generate_n_tokens(&mut thread_rng(), &("I", " "), 7)
-                .unwrap(),
+            chain.generate_n_tokens(&mut rng(), &("I", " "), 7).unwrap(),
             vec!["am", "-", "full", "!", "of", "?", "cats"],
         );
 
         // Now with an actual limit
         assert_eq!(
-            chain
-                .generate_n_tokens(&mut thread_rng(), &("I", " "), 2)
-                .unwrap(),
+            chain.generate_n_tokens(&mut rng(), &("I", " "), 2).unwrap(),
             vec!["am", "-"],
         );
 
         // Now with extra
         assert_eq!(
             chain
-                .generate_n_tokens(&mut thread_rng(), &("I", " "), 13)
+                .generate_n_tokens(&mut rng(), &("I", " "), 13)
                 .unwrap()
                 .len(),
             13
@@ -561,7 +557,7 @@ mod tests {
         // Exactly on the line, so only one of the new start tokens should be taken
         assert_eq!(
             chain
-                .generate_n_tokens(&mut thread_rng(), &("I", " "), 8)
+                .generate_n_tokens(&mut rng(), &("I", " "), 8)
                 .unwrap()
                 .len(),
             8
@@ -573,10 +569,12 @@ mod tests {
         let s = "I am-full!of?cats";
         let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
-        assert!(chain
-            .generate_max_n_tokens(&mut thread_rng(), &("I", " "), 0)
-            .unwrap()
-            .is_empty())
+        assert!(
+            chain
+                .generate_max_n_tokens(&mut rng(), &("I", " "), 0)
+                .unwrap()
+                .is_empty()
+        )
     }
 
     #[test]
@@ -584,9 +582,11 @@ mod tests {
         let s = "I am-full!of?cats";
         let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
-        assert!(chain
-            .generate_max_n_tokens(&mut thread_rng(), &("You", " "), 13)
-            .is_none())
+        assert!(
+            chain
+                .generate_max_n_tokens(&mut rng(), &("You", " "), 13)
+                .is_none()
+        )
     }
 
     #[test]
@@ -594,10 +594,12 @@ mod tests {
         let s = "I am-full!of?cats";
         let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
-        assert!(chain
-            .generate_n_tokens(&mut thread_rng(), &("I", " "), 0)
-            .unwrap()
-            .is_empty())
+        assert!(
+            chain
+                .generate_n_tokens(&mut rng(), &("I", " "), 0)
+                .unwrap()
+                .is_empty()
+        )
     }
 
     #[test]
@@ -605,9 +607,11 @@ mod tests {
         let s = "I am-full!of?cats";
         let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
-        assert!(chain
-            .generate_n_tokens(&mut thread_rng(), &("You", " "), 13)
-            .is_none())
+        assert!(
+            chain
+                .generate_n_tokens(&mut rng(), &("You", " "), 13)
+                .is_none()
+        )
     }
 
     #[test]
@@ -628,7 +632,7 @@ Norm:  Thirsty guy walks into a bar.  You finish it.
 "#;
         let cb = Chain::builder().feed_str(s).into_cb();
         let chain = cb.build().unwrap();
-        let mut rng = thread_rng();
+        let mut rng = rng();
         for _ in 0..100 {
             let start = chain.start_tokens(&mut rng).unwrap();
             let _ = chain.generate_n_tokens(&mut rng, &start.as_ref(), 100);
@@ -665,7 +669,7 @@ that doesn't have a JIT and C programs become scripts.
 
         let chain = Chain::from_text(s).unwrap();
         for _ in 0..100 {
-            chain.generate_str(&mut thread_rng(), 100).unwrap();
+            chain.generate_str(&mut rng(), 100).unwrap();
         }
     }
 

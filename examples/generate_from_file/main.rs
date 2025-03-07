@@ -5,7 +5,7 @@
 
 use markovish::Chain;
 
-use rand::thread_rng;
+use rand::rng;
 use std::{path::PathBuf, process::exit};
 
 const USAGE: &str = "Usage: generate_from_file <FILE_PATH> <N>";
@@ -23,7 +23,7 @@ fn main() {
     let chain = Chain::from_text(&text).unwrap();
     let gen_text = chain
         .generate_str(
-            &mut thread_rng(),
+            &mut rng(),
             args[2]
                 .parse()
                 .expect("did not provide a valid token number"),

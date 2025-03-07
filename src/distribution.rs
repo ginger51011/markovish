@@ -3,7 +3,7 @@
 
 use hashbrown::HashMap;
 use rand::Rng;
-use rand_distr::{weighted_alias::WeightedAliasIndex, Distribution};
+use rand_distr::{Distribution, weighted::WeightedAliasIndex};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
