@@ -1,6 +1,6 @@
 [package]
 name = "markovish"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Emil Jonathan Eriksson <github.com/ginger51011>"]
 edition = "2024"
 description = "Simple Markov chain implementation for text generation"
